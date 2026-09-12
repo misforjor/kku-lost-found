@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { initData, getCurrentUser } from './data';
 import { AppContext } from './context';
 import type { User, AppView } from './types';
-import Navbar from "./Navbar";
-import HomePage from "./HomePage";
-import PostDetail from "./PostDetail";
-import CreateEditPost from "./CreateEditPost";
-import AuthPage from "./AuthPage";
-import ProfilePage from './ProfilePage';
-import MyPosts from './MyPosts';
+import Navbar from "./components/Navbar";
+import HomePage from "./components/HomePage";
+import PostDetail from "./components/PostDetail";
+import CreateEditPost from "./components/CreateEditPost";
+import AuthPage from "./components/AuthPage";
+import MyPosts from "./components/MyPosts";
+import ProfilePage from "./components/ProfilePage";
 
 initData();
 
