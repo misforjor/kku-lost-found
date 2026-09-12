@@ -36,7 +36,7 @@ export default function AuthPage({ mode: initialMode }: Props) {
         setCurrentUser(user);
         navigate({ name: 'home' });
       } else {
-        setError('อีเมลหรือรหัสผ่านไม่ถูกต้อง ลองบัญชีทดสอบ: alice@kku.ac.th / demo123');
+        setError('อีเมลหรือรหัสผ่านไม่ถูกต้อง โปรดลองอีกครั้ง');
       }
     } else {
       if (!displayName.trim()) { setError('กรุณากรอกชื่อผู้ใช้'); setLoading(false); return; }
