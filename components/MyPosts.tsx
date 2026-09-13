@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getPostsByUserId, deletePost, updatePost } from '../data';
 import { useApp } from '../context';
-import type { PostType, PostStatus } from '../types';
+import type { Post, PostType, PostStatus } from '../types';
 import { STATUS_BY_TYPE } from '../types';
 
 const TYPE_STYLE: Record<string, string> = {
@@ -37,7 +37,21 @@ export default function MyPosts() {
     );
   }
 
-  const allPosts = getPostsByUserId(currentUser.id);
+  useEffect(() => {
+  async function loadPosts() {
+    if (!currentUser) {
+      setAllPosts([]);
+      setLoading(false);
+      return;
+    }
+
+    const posts = await getPostsByUserId(currentUser.id);
+    setAllPosts(posts);
+    setLoading(false);
+  }
+
+  loadPosts();
+}, [currentUser]);
 
   const filtered = allPosts.filter(p => {
     if (filterType !== 'ทั้งหมด' && p.type !== filterType) return false;
@@ -46,16 +60,29 @@ export default function MyPosts() {
     return true;
   });
 
-  const handleDelete = (id: string) => {
-    deletePost(id);
+  const handleDelete = async (id: string) => {
+  await deletePost(id);
+  setAllPosts(prev => prev.filter(p => p.id !== id));
+  setDeletingId(null);
+};
     setDeletingId(null);
     refresh();
   };
 
-  const handleStatusToggle = (id: string, type: PostType, currentStatus: PostStatus) => {
+  const handleStatusToggle = async (
+  id: string,
+  type: PostType,
+  currentStatus: PostStatus
+) => {
     const statuses = STATUS_BY_TYPE[type];
     const nextStatus = statuses[statuses.indexOf(currentStatus) === 0 ? 1 : 0];
-    updatePost(id, { status: nextStatus });
+    await updatePost(id, { status: nextStatus });
+
+setAllPosts(prev =>
+  prev.map(p =>
+    p.id === id ? { ...p, status: nextStatus } : p
+  )
+);
     refresh();
   };
 
