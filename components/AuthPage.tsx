@@ -31,7 +31,7 @@ export default function AuthPage({ mode: initialMode }: Props) {
     await new Promise(r => setTimeout(r, 300));
 
     if (mode === 'login') {
-      const user = login(email, password);
+      const user = await login(email, password);
       if (user) {
         setCurrentUser(user);
         navigate({ name: 'home' });
