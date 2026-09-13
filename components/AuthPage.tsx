@@ -39,17 +39,43 @@ export default function AuthPage({ mode: initialMode }: Props) {
         setError('อีเมลหรือรหัสผ่านไม่ถูกต้อง โปรดลองอีกครั้ง');
       }
     } else {
-      if (!displayName.trim()) { setError('กรุณากรอกชื่อผู้ใช้'); setLoading(false); return; }
-      if (!isValidEmail(email)) { setError('อีเมลต้องเป็น @gmail.com หรือ @kku.ac.th เท่านั้น'); setLoading(false); return; }
-      if (password.length < 6) { setError('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร'); setLoading(false); return; }
-      if (!isValidPassword(password)) { setError('รหัสผ่านต้องเป็นภาษาอังกฤษ ตัวเลข หรืออักขระพิเศษเท่านั้น'); setLoading(false); return; }
-      const user = register(displayName.trim(), email, password);
-      if (user) {
-        setCurrentUser(user);
-        navigate({ name: 'home' });
-      } else {
-        setError('อีเมลนี้ถูกใช้งานแล้ว');
-      }
+  if (!displayName.trim()) {
+    setError('กรุณากรอกชื่อผู้ใช้');
+    setLoading(false);
+    return;
+  }
+
+  if (!isValidEmail(email)) {
+    setError('อีเมลต้องเป็น @gmail.com หรือ @kku.ac.th เท่านั้น');
+    setLoading(false);
+    return;
+  }
+
+  if (password.length < 6) {
+    setError('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
+    setLoading(false);
+    return;
+  }
+
+  if (!isValidPassword(password)) {
+    setError('รหัสผ่านต้องเป็นภาษาอังกฤษ ตัวเลข หรืออักขระพิเศษเท่านั้น');
+    setLoading(false);
+    return;
+  }
+
+  const user = await register(
+    displayName.trim(),
+    email,
+    password
+  );
+
+  if (user) {
+    setCurrentUser(user);
+    navigate({ name: 'home' });
+  } else {
+    setError('สมัครสมาชิกไม่สำเร็จ โปรดลองอีกครั้ง');
+  }
+}
     }
     setLoading(false);
   };
