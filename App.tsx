@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import { initData, getCurrentUser } from './data';
 import { AppContext } from './context';
 import type { User, AppView } from './types';
-import Navbar from "./components/Navbar";
-import HomePage from "./components/HomePage";
-import PostDetail from "./components/PostDetail";
-import CreateEditPost from "./components/CreateEditPost";
-import AuthPage from "./components/AuthPage";
-import MyPosts from "./components/MyPosts";
-import ProfilePage from "./components/ProfilePage";
+
+import Navbar from './components/Navbar';
+import HomePage from './components/HomePage';
+import PostDetail from './components/PostDetail';
+import CreateEditPost from './components/CreateEditPost';
+import AuthPage from './components/AuthPage';
+import MyPosts from './components/MyPosts';
+import ProfilePage from './components/ProfilePage';
 
 initData();
 
@@ -18,9 +19,12 @@ export default function App() {
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
-    getCurrentUser().then((user) => {
+    async function loadCurrentUser() {
+      const user = await getCurrentUser();
       setCurrentUser(user);
-    });
+    }
+
+    loadCurrentUser();
   }, []);
 
   const navigate = (v: AppView) => {
@@ -37,7 +41,7 @@ export default function App() {
         setCurrentUser,
         navigate,
         view,
-        refresh
+        refresh,
       }}
     >
       <div
@@ -50,33 +54,29 @@ export default function App() {
           {view.name === 'home' && <HomePage />}
 
           {view.name === 'post-detail' &&
-            view.postId &&
-            <PostDetail postId={view.postId} />
-          }
+            view.postId && (
+              <PostDetail postId={view.postId} />
+            )}
 
-          {view.name === 'create-post' &&
+          {view.name === 'create-post' && (
             <CreateEditPost />
-          }
+          )}
 
           {view.name === 'edit-post' &&
-            view.postId &&
-            <CreateEditPost postId={view.postId} />
-          }
+            view.postId && (
+              <CreateEditPost postId={view.postId} />
+            )}
 
-          {view.name === 'auth' &&
+          {view.name === 'auth' && (
             <AuthPage
               key={view.authMode}
               mode={view.authMode || 'login'}
             />
-          }
+          )}
 
-          {view.name === 'profile' &&
-            <ProfilePage />
-          }
+          {view.name === 'profile' && <ProfilePage />}
 
-          {view.name === 'my-posts' &&
-            <MyPosts />
-          }
+          {view.name === 'my-posts' && <MyPosts />}
         </div>
       </div>
     </AppContext.Provider>
