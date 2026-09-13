@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { getPostsByUserId, deletePost, updatePost } from '../data';
 import { useApp } from '../context';
 import type { Post, PostType, PostStatus } from '../types';
@@ -21,9 +21,9 @@ function isResolved(status: PostStatus) {
 }
 
 export default function MyPosts() {
-  const { currentUser, navigate } = useApp();
+  const { currentUser, navigate, refresh } = useApp();
 
-  const [allPosts, setAllPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [filterType, setFilterType] =
@@ -35,27 +35,44 @@ export default function MyPosts() {
   const [deletingId, setDeletingId] =
     useState<string | null>(null);
 
-  // โหลดโพสต์ของผู้ใช้จาก Supabase
   useEffect(() => {
+    let cancelled = false;
+
     async function loadPosts() {
       if (!currentUser) {
-        setAllPosts([]);
+        setPosts([]);
         setLoading(false);
         return;
       }
 
       setLoading(true);
 
-      const posts = await getPostsByUserId(currentUser.id);
+      try {
+        const data = await getPostsByUserId(currentUser.id);
 
-      setAllPosts(posts);
-      setLoading(false);
+        if (!cancelled) {
+          setPosts(data);
+        }
+      } catch (error) {
+        console.error('โหลดโพสต์ของฉันไม่สำเร็จ:', error);
+
+        if (!cancelled) {
+          setPosts([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
     }
 
     loadPosts();
-  }, [currentUser]);
 
-  // ถ้ายังไม่ได้ Login
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser, refresh]);
+
   if (!currentUser) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-16 text-center">
@@ -78,18 +95,7 @@ export default function MyPosts() {
     );
   }
 
-  // กำลังโหลด
-  if (loading) {
-    return (
-      <div className="max-w-3xl mx-auto px-4 py-16 text-center">
-        <p className="text-gray-500">
-          กำลังโหลดโพสต์...
-        </p>
-      </div>
-    );
-  }
-
-  const filtered = allPosts.filter(post => {
+  const filtered = posts.filter(post => {
     if (
       filterType !== 'ทั้งหมด' &&
       post.type !== filterType
@@ -114,22 +120,22 @@ export default function MyPosts() {
     return true;
   });
 
-  // ลบโพสต์
   const handleDelete = async (id: string) => {
     try {
       await deletePost(id);
 
-      setAllPosts(prev =>
+      setPosts(prev =>
         prev.filter(post => post.id !== id)
       );
 
       setDeletingId(null);
+      refresh();
     } catch (error) {
-      console.error('Delete post error:', error);
+      console.error('ลบโพสต์ไม่สำเร็จ:', error);
+      alert('ไม่สามารถลบโพสต์ได้ กรุณาลองใหม่อีกครั้ง');
     }
   };
 
-  // เปลี่ยนสถานะโพสต์
   const handleStatusToggle = async (
     id: string,
     type: PostType,
@@ -137,36 +143,42 @@ export default function MyPosts() {
   ) => {
     const statuses = STATUS_BY_TYPE[type];
 
-    const currentIndex =
-      statuses.indexOf(currentStatus);
+    const currentIndex = statuses.indexOf(currentStatus);
 
     const nextStatus =
       statuses[currentIndex === 0 ? 1 : 0];
 
     try {
-      await updatePost(id, {
+      const updated = await updatePost(id, {
         status: nextStatus,
       });
 
-      setAllPosts(prev =>
+      setPosts(prev =>
         prev.map(post =>
-          post.id === id
-            ? {
-                ...post,
-                status: nextStatus,
-              }
-            : post
+          post.id === id ? updated : post
         )
       );
+
+      refresh();
     } catch (error) {
-      console.error('Update post error:', error);
+      console.error('เปลี่ยนสถานะไม่สำเร็จ:', error);
+      alert('ไม่สามารถเปลี่ยนสถานะโพสต์ได้');
     }
   };
+
+  if (loading) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-16 text-center">
+        <p className="text-gray-500">
+          กำลังโหลดโพสต์ของคุณ...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
 
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1
           style={{
@@ -180,9 +192,7 @@ export default function MyPosts() {
 
         <button
           onClick={() =>
-            navigate({
-              name: 'create-post',
-            })
+            navigate({ name: 'create-post' })
           }
           className="px-4 py-2 bg-[#1E293B] text-white rounded-full text-sm font-medium hover:bg-[#0F172A] transition-colors"
         >
@@ -190,40 +200,37 @@ export default function MyPosts() {
         </button>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-wrap gap-2 mb-6">
 
-        {/* Type */}
         <div className="flex gap-1.5 bg-white border border-gray-200 rounded-xl p-1">
-          {(
-            ['ทั้งหมด', 'ตามหา', 'พบของหาย'] as const
-          ).map(type => (
-            <button
-              key={type}
-              onClick={() =>
-                setFilterType(type)
-              }
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                filterType === type
-                  ? 'bg-[#1E293B] text-white shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {type}
-            </button>
-          ))}
+          {(['ทั้งหมด', 'ตามหา', 'พบของหาย'] as const).map(
+            type => (
+              <button
+                key={type}
+                onClick={() => setFilterType(type)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  filterType === type
+                    ? 'bg-[#1E293B] text-white shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {type}
+              </button>
+            )
+          )}
         </div>
 
-        {/* Status */}
         <div className="flex gap-1.5 bg-white border border-gray-200 rounded-xl p-1">
           {(
-            ['ทั้งหมด', 'กำลังดำเนินการ', 'เสร็จสิ้น'] as const
+            [
+              'ทั้งหมด',
+              'กำลังดำเนินการ',
+              'เสร็จสิ้น',
+            ] as const
           ).map(status => (
             <button
               key={status}
-              onClick={() =>
-                setFilterStatus(status)
-              }
+              onClick={() => setFilterStatus(status)}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                 filterStatus === status
                   ? 'bg-[#1E293B] text-white shadow-sm'
@@ -234,9 +241,9 @@ export default function MyPosts() {
             </button>
           ))}
         </div>
+
       </div>
 
-      {/* Empty */}
       {filtered.length === 0 ? (
         <div className="text-center py-16">
 
@@ -245,27 +252,25 @@ export default function MyPosts() {
           </p>
 
           <p className="text-lg font-semibold text-gray-700 mb-2">
-            {allPosts.length === 0
+            {posts.length === 0
               ? 'คุณยังไม่มีโพสต์'
               : 'ไม่พบโพสต์ที่ตรงกับตัวกรอง'}
           </p>
 
-          {allPosts.length === 0 && (
+          {posts.length === 0 && (
             <button
               onClick={() =>
-                navigate({
-                  name: 'create-post',
-                })
+                navigate({ name: 'create-post' })
               }
               className="mt-4 px-6 py-2.5 bg-[#1E293B] text-white rounded-full text-sm font-medium hover:bg-[#0F172A] transition-colors"
             >
               สร้างโพสต์แรกของคุณ
             </button>
           )}
+
         </div>
       ) : (
 
-        /* Posts */
         <div className="space-y-3">
 
           {filtered.map(post => (
@@ -281,7 +286,6 @@ export default function MyPosts() {
 
               <div className="flex gap-0">
 
-                {/* Image */}
                 <div className="w-24 sm:w-32 flex-shrink-0 bg-gray-100">
 
                   {post.imageUrl ? (
@@ -289,9 +293,7 @@ export default function MyPosts() {
                       src={post.imageUrl}
                       alt={post.title}
                       className="w-full h-full object-cover"
-                      style={{
-                        minHeight: '5rem',
-                      }}
+                      style={{ minHeight: '5rem' }}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-2xl text-gray-300 p-4">
@@ -301,23 +303,18 @@ export default function MyPosts() {
 
                 </div>
 
-                {/* Information */}
                 <div className="flex-1 p-4 min-w-0">
 
                   <div className="flex items-start gap-2 flex-wrap mb-1">
 
                     <span
-                      className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                        TYPE_STYLE[post.type]
-                      }`}
+                      className={`text-xs font-semibold px-2 py-0.5 rounded-full ${TYPE_STYLE[post.type]}`}
                     >
                       {post.type}
                     </span>
 
                     <span
-                      className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                        STATUS_STYLE[post.status]
-                      }`}
+                      className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLE[post.status]}`}
                     >
                       {post.status}
                     </span>
@@ -347,10 +344,8 @@ export default function MyPosts() {
 
                 </div>
 
-                {/* Buttons */}
                 <div className="flex flex-col gap-1 p-3 border-l border-gray-100">
 
-                  {/* ดู */}
                   <button
                     onClick={() =>
                       navigate({
@@ -363,7 +358,6 @@ export default function MyPosts() {
                     ดู
                   </button>
 
-                  {/* แก้ไข */}
                   <button
                     onClick={() =>
                       navigate({
@@ -376,7 +370,6 @@ export default function MyPosts() {
                     แก้ไข
                   </button>
 
-                  {/* เปิด / ปิด */}
                   <button
                     onClick={() =>
                       handleStatusToggle(
@@ -396,9 +389,7 @@ export default function MyPosts() {
                       : 'ปิด'}
                   </button>
 
-                  {/* Delete */}
                   {deletingId === post.id ? (
-
                     <div className="flex gap-1">
 
                       <button
@@ -420,9 +411,7 @@ export default function MyPosts() {
                       </button>
 
                     </div>
-
                   ) : (
-
                     <button
                       onClick={() =>
                         setDeletingId(post.id)
@@ -431,27 +420,25 @@ export default function MyPosts() {
                     >
                       ลบ
                     </button>
-
                   )}
 
                 </div>
 
               </div>
+
             </div>
 
           ))}
 
         </div>
+
       )}
 
-      {/* Footer count */}
       <p className="text-center text-xs text-gray-400 mt-6">
-        ทั้งหมด {allPosts.length} โพสต์ · กำลังดำเนินการ{' '}
-        {
-          allPosts.filter(
-            post => !isResolved(post.status)
-          ).length
-        }{' '}
+        ทั้งหมด {posts.length} โพสต์ · กำลังดำเนินการ{' '}
+        {posts.filter(
+          post => !isResolved(post.status)
+        ).length}{' '}
         โพสต์
       </p>
 
