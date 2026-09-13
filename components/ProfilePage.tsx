@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { updateUser, getPostsByUserId } from '../data';
 import { useApp } from '../context';
-import type { Post[] } from '../types';
+import type { Post } from '../types';
 
 export default function ProfilePage() {
   const { currentUser, setCurrentUser, navigate } = useApp();
