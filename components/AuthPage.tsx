@@ -7,7 +7,7 @@ interface Props {
 }
 
 function isValidEmail(email: string) {
-  return email.endsWith('@gmail.com') || email.endsWith('@kku.ac.th');
+  return email.endsWith('@gmail.com') || email.endsWith('@kkumail.com');
 }
 
 function isValidPassword(password: string) {
@@ -49,7 +49,7 @@ export default function AuthPage({ mode: initialMode }: Props) {
         }
 
         if (!isValidEmail(email)) {
-          setError('อีเมลต้องเป็น @gmail.com หรือ @kku.ac.th เท่านั้น');
+          setError('อีเมลต้องเป็น @gmail.com หรือ @kkumail.com เท่านั้น');
           return;
         }
 
