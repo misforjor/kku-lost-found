@@ -48,30 +48,19 @@ function timeAgo(iso: string): string {
   });
 }
 
-export default function PostCard({
-  post,
-}: {
-  post: Post;
-}) {
+export default function PostCard({ post }: { post: Post }) {
   const { navigate } = useApp();
 
-  const [poster, setPoster] = useState<User | undefined>(
-    undefined
-  );
-
-  const [loadingPoster, setLoadingPoster] = useState(true);
+  const [poster, setPoster] = useState<User | undefined>(undefined);
 
   useEffect(() => {
     let cancelled = false;
 
     async function loadPoster() {
-      setLoadingPoster(true);
-
       const user = await getUserById(post.userId);
 
       if (!cancelled) {
         setPoster(user);
-        setLoadingPoster(false);
       }
     }
 
@@ -92,7 +81,6 @@ export default function PostCard({
       }
       className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 text-left w-full group"
     >
-      {/* รูปภาพ */}
       <div className="relative h-44 bg-gray-100">
         {post.imageUrl ? (
           <img
@@ -102,9 +90,7 @@ export default function PostCard({
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-gray-50">
-            <span className="text-4xl opacity-30">
-              📦
-            </span>
+            <span className="text-4xl opacity-30">📦</span>
 
             <span className="text-xs text-gray-400 font-medium">
               ไม่มีรูปภาพ
@@ -121,7 +107,6 @@ export default function PostCard({
         </span>
       </div>
 
-      {/* ข้อมูลโพสต์ */}
       <div className="p-4">
         <h3 className="font-semibold text-[#1E293B] text-base leading-tight mb-2 line-clamp-2">
           {post.title}
@@ -143,7 +128,6 @@ export default function PostCard({
           </span>
         </div>
 
-        {/* สถานะ + ผู้โพสต์ */}
         <div className="flex items-center justify-between gap-2">
           <span
             className={`text-xs font-medium px-2.5 py-1 rounded-full ${
@@ -153,10 +137,8 @@ export default function PostCard({
             {post.status}
           </span>
 
-          <span className="text-xs text-gray-400 truncate max-w-[120px]">
-            {loadingPoster
-              ? 'กำลังโหลด...'
-              : poster?.displayName || 'ไม่ทราบ'}
+          <span className="text-xs text-gray-400 truncate">
+            {poster?.displayName || 'กำลังโหลด...'}
           </span>
         </div>
       </div>
