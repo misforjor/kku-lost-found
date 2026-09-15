@@ -15,7 +15,7 @@ const ALL_STATUSES: PostStatus[] = [
 const ALL_TYPES: PostType[] = ['ตามหา', 'พบของหาย'];
 
 export default function HomePage() {
-  const { navigate, currentUser } = useApp();
+  const { navigate, currentUser, view, refresh } = useApp();
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [search, setSearch] = useState('');
