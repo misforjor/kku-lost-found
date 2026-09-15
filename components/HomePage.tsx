@@ -15,7 +15,7 @@ const ALL_STATUSES: PostStatus[] = [
 const ALL_TYPES: PostType[] = ['ตามหา', 'พบของหาย'];
 
 export default function HomePage() {
-  const { navigate, currentUser, view, refresh } = useApp();
+  const { navigate, currentUser, refresh } = useApp();
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [search, setSearch] = useState('');
@@ -26,13 +26,13 @@ export default function HomePage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
-    async function loadPosts() {
-      const data = await getPosts();
-      setPosts(data);
-    }
+  async function loadPosts() {
+    const data = await getPosts();
+    setPosts(data);
+  }
 
-    loadPosts();
-  }, []);
+  loadPosts();
+}, [refresh]);
 
   const filtered = useMemo(() => {
     let result = [...posts];
