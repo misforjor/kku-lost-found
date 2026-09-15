@@ -15,9 +15,11 @@ const ALL_STATUSES: PostStatus[] = [
 const ALL_TYPES: PostType[] = ['ตามหา', 'พบของหาย'];
 
 export default function HomePage() {
-  const { navigate, currentUser } = useApp();
+  const { navigate, currentUser, view, refresh } = useApp();
 
   const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [search, setSearch] = useState('');
   const [selectedTypes, setSelectedTypes] = useState<PostType[]>([]);
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
@@ -29,6 +31,8 @@ export default function HomePage() {
     let cancelled = false;
 
     async function loadPosts() {
+      setLoading(true);
+
       try {
         const data = await getPosts();
 
@@ -41,6 +45,10 @@ export default function HomePage() {
         if (!cancelled) {
           setPosts([]);
         }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
 
@@ -49,7 +57,7 @@ export default function HomePage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [refresh]);
 
   const filtered = useMemo(() => {
     let result = [...posts];
@@ -236,7 +244,6 @@ export default function HomePage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* HEADER */}
       <div className="mb-8">
         <h1
           style={{
@@ -255,7 +262,6 @@ export default function HomePage() {
         </p>
       </div>
 
-      {/* SEARCH + SORT */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">
           <svg
@@ -290,7 +296,6 @@ export default function HomePage() {
         </div>
 
         <div className="flex gap-2">
-          {/* FILTER MOBILE */}
           <button
             onClick={() => setFiltersOpen(o => !o)}
             className="lg:hidden flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium hover:border-gray-300 transition-colors"
@@ -318,7 +323,6 @@ export default function HomePage() {
             )}
           </button>
 
-          {/* SORT */}
           <select
             value={sort}
             onChange={e =>
@@ -330,7 +334,6 @@ export default function HomePage() {
             <option value="oldest">เก่าสุด</option>
           </select>
 
-          {/* CREATE POST */}
           {currentUser && (
             <button
               onClick={() =>
@@ -344,7 +347,6 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* MOBILE FILTER */}
       {filtersOpen && (
         <div className="lg:hidden bg-white border border-gray-200 rounded-2xl p-5 mb-6">
           <FiltersPanel />
@@ -352,7 +354,6 @@ export default function HomePage() {
       )}
 
       <div className="flex gap-8">
-        {/* DESKTOP FILTER */}
         <aside className="hidden lg:block w-56 flex-shrink-0">
           <div className="bg-white rounded-2xl border border-gray-100 p-5 sticky top-24">
             <h2 className="font-semibold text-[#1E293B] mb-4">
@@ -363,11 +364,23 @@ export default function HomePage() {
           </div>
         </aside>
 
-        {/* POSTS */}
         <div className="flex-1 min-w-0">
-          {filtered.length === 0 ? (
+
+          {/* กำลังโหลด */}
+          {loading ? (
             <div className="text-center py-20">
-              <p className="text-5xl mb-4">🔍</p>
+              <div className="inline-block w-8 h-8 border-4 border-gray-200 border-t-[#1E293B] rounded-full animate-spin mb-4" />
+
+              <p className="text-gray-500 text-sm">
+                กำลังโหลดโพสต์...
+              </p>
+            </div>
+
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-20">
+              <p className="text-5xl mb-4">
+                🔍
+              </p>
 
               <p className="text-lg font-semibold text-gray-700 mb-2">
                 ไม่พบโพสต์
@@ -388,6 +401,7 @@ export default function HomePage() {
                 </button>
               )}
             </div>
+
           ) : (
             <>
               <p className="text-sm text-gray-500 mb-4">
@@ -407,7 +421,6 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* MOBILE CREATE POST */}
       {currentUser && (
         <button
           onClick={() =>
