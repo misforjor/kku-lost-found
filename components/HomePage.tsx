@@ -18,9 +18,6 @@ export default function HomePage() {
   const { navigate, currentUser } = useApp();
 
   const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState('');
-
   const [search, setSearch] = useState('');
   const [selectedTypes, setSelectedTypes] = useState<PostType[]>([]);
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
@@ -32,9 +29,6 @@ export default function HomePage() {
     let cancelled = false;
 
     async function loadPosts() {
-      setLoading(true);
-      setLoadError('');
-
       try {
         const data = await getPosts();
 
@@ -46,13 +40,6 @@ export default function HomePage() {
 
         if (!cancelled) {
           setPosts([]);
-          setLoadError(
-            'ไม่สามารถโหลดโพสต์ได้ กรุณาลองรีเฟรชหน้าอีกครั้ง'
-          );
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
         }
       }
     }
@@ -161,7 +148,6 @@ export default function HomePage() {
                 <span
                   className={`w-2 h-2 rounded-full ${TYPE_DOT[t]}`}
                 />
-
                 {t}
               </span>
             </label>
@@ -250,7 +236,7 @@ export default function HomePage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
+      {/* HEADER */}
       <div className="mb-8">
         <h1
           style={{
@@ -269,7 +255,7 @@ export default function HomePage() {
         </p>
       </div>
 
-      {/* Search + controls */}
+      {/* SEARCH + SORT */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">
           <svg
@@ -304,7 +290,7 @@ export default function HomePage() {
         </div>
 
         <div className="flex gap-2">
-          {/* Mobile filters */}
+          {/* FILTER MOBILE */}
           <button
             onClick={() => setFiltersOpen(o => !o)}
             className="lg:hidden flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium hover:border-gray-300 transition-colors"
@@ -319,7 +305,7 @@ export default function HomePage() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M3 4a1 1 0 011 1v2a1 1 0 00.293.707L13 13.414V19a1 1 0 00.553.894l4 2A1 1 0 0018 21v-7.586l2.707-6.707A1 1 0 0021 6V4a1 1 0 00-1-1H4a1 1 0 00-1 1z"
+                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"
               />
             </svg>
 
@@ -332,7 +318,7 @@ export default function HomePage() {
             )}
           </button>
 
-          {/* Sort */}
+          {/* SORT */}
           <select
             value={sort}
             onChange={e =>
@@ -344,7 +330,7 @@ export default function HomePage() {
             <option value="oldest">เก่าสุด</option>
           </select>
 
-          {/* Create post */}
+          {/* CREATE POST */}
           {currentUser && (
             <button
               onClick={() =>
@@ -358,7 +344,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Mobile filters */}
+      {/* MOBILE FILTER */}
       {filtersOpen && (
         <div className="lg:hidden bg-white border border-gray-200 rounded-2xl p-5 mb-6">
           <FiltersPanel />
@@ -366,7 +352,7 @@ export default function HomePage() {
       )}
 
       <div className="flex gap-8">
-        {/* Desktop filters */}
+        {/* DESKTOP FILTER */}
         <aside className="hidden lg:block w-56 flex-shrink-0">
           <div className="bg-white rounded-2xl border border-gray-100 p-5 sticky top-24">
             <h2 className="font-semibold text-[#1E293B] mb-4">
@@ -377,40 +363,9 @@ export default function HomePage() {
           </div>
         </aside>
 
-        {/* Posts */}
+        {/* POSTS */}
         <div className="flex-1 min-w-0">
-          {loading ? (
-            <div className="text-center py-20">
-              <div className="w-10 h-10 border-4 border-gray-200 border-t-[#1E293B] rounded-full animate-spin mx-auto mb-5" />
-
-              <p className="text-lg font-semibold text-gray-700 mb-2">
-                กำลังโหลดโพสต์...
-              </p>
-
-              <p className="text-gray-500 text-sm">
-                กำลังดึงข้อมูลจากระบบ
-              </p>
-            </div>
-          ) : loadError ? (
-            <div className="text-center py-20">
-              <p className="text-5xl mb-4">⚠️</p>
-
-              <p className="text-lg font-semibold text-gray-700 mb-2">
-                โหลดโพสต์ไม่สำเร็จ
-              </p>
-
-              <p className="text-gray-500 text-sm mb-6">
-                {loadError}
-              </p>
-
-              <button
-                onClick={() => window.location.reload()}
-                className="px-6 py-2.5 bg-[#1E293B] text-white rounded-full text-sm font-medium hover:bg-[#0F172A] transition-colors"
-              >
-                รีเฟรชหน้า
-              </button>
-            </div>
-          ) : filtered.length === 0 ? (
+          {filtered.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-5xl mb-4">🔍</p>
 
@@ -452,7 +407,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Mobile create post */}
+      {/* MOBILE CREATE POST */}
       {currentUser && (
         <button
           onClick={() =>
