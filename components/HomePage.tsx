@@ -15,9 +15,12 @@ const ALL_STATUSES: PostStatus[] = [
 const ALL_TYPES: PostType[] = ['ตามหา', 'พบของหาย'];
 
 export default function HomePage() {
-  const { navigate, currentUser, refresh } = useApp();
+  const { navigate, currentUser } = useApp();
 
   const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+
   const [search, setSearch] = useState('');
   const [selectedTypes, setSelectedTypes] = useState<PostType[]>([]);
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
@@ -26,13 +29,40 @@ export default function HomePage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
-  async function loadPosts() {
-    const data = await getPosts();
-    setPosts(data);
-  }
+    let cancelled = false;
 
-  loadPosts();
-}, [refresh]);
+    async function loadPosts() {
+      setLoading(true);
+      setLoadError('');
+
+      try {
+        const data = await getPosts();
+
+        if (!cancelled) {
+          setPosts(data);
+        }
+      } catch (error) {
+        console.error('โหลดโพสต์ไม่สำเร็จ:', error);
+
+        if (!cancelled) {
+          setPosts([]);
+          setLoadError(
+            'ไม่สามารถโหลดโพสต์ได้ กรุณาลองรีเฟรชหน้าอีกครั้ง'
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadPosts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const filtered = useMemo(() => {
     let result = [...posts];
@@ -48,7 +78,9 @@ export default function HomePage() {
     }
 
     if (selectedTypes.length) {
-      result = result.filter(p => selectedTypes.includes(p.type));
+      result = result.filter(p =>
+        selectedTypes.includes(p.type)
+      );
     }
 
     if (selectedLocations.length) {
@@ -129,6 +161,7 @@ export default function HomePage() {
                 <span
                   className={`w-2 h-2 rounded-full ${TYPE_DOT[t]}`}
                 />
+
                 {t}
               </span>
             </label>
@@ -283,7 +316,7 @@ export default function HomePage() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"
+                d="M3 4a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"
               />
             </svg>
 
@@ -338,7 +371,38 @@ export default function HomePage() {
         </aside>
 
         <div className="flex-1 min-w-0">
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-20">
+              <div className="text-4xl mb-4">⏳</div>
+
+              <p className="text-lg font-semibold text-gray-700 mb-2">
+                กำลังโหลดโพสต์...
+              </p>
+
+              <p className="text-gray-500 text-sm">
+                กรุณารอสักครู่
+              </p>
+            </div>
+          ) : loadError ? (
+            <div className="text-center py-20">
+              <p className="text-5xl mb-4">⚠️</p>
+
+              <p className="text-lg font-semibold text-gray-700 mb-2">
+                โหลดโพสต์ไม่สำเร็จ
+              </p>
+
+              <p className="text-gray-500 text-sm mb-6">
+                {loadError}
+              </p>
+
+              <button
+                onClick={() => window.location.reload()}
+                className="px-6 py-2.5 bg-[#1E293B] text-white rounded-full text-sm font-medium hover:bg-[#0F172A] transition-colors"
+              >
+                รีเฟรชหน้า
+              </button>
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-5xl mb-4">🔍</p>
 
